@@ -1,0 +1,38 @@
+[
+	{
+		"name": "Perky Blenders: sow blend",
+		"url": "https://perkyblenders.com/products/sow-blend-3?variant=34399500009531",
+		"xpath": "//*[@id=\"product-form-page-product-coffee\"]/div[6]/span[1]/span[1]",
+		"category": "coffee"
+	},
+	{
+		"name": "Perky Blenders: forest blend",
+		"url": "https://perkyblenders.com/products/forest-blend?variant=7180789579835",
+		"xpath": "//*[@id=\"product-form-page-product-coffee\"]/div[6]/span[1]/span[1]",
+		"category": "coffee"
+	},
+	{
+		"name": "Gentlemen Baristas: BOATER - SINGLE ORIGIN - GUATEMALA",
+		"url": "https://www.thegentlemenbaristas.com/collections/coffee/products/boater?variant=37546727538845",
+		"xpath": "//*[@id=\"product_form_1883846606944\"]/div/div[2]/div[1]/div[1]/div[1]/span",
+		"category": "coffee"
+	},
+	{
+		"name": "Carnival Coffee: LA PERLA NEGRA, GUATEMALA",
+		"url": "https://carnivalcoffee.co.uk/collections/espresso-coffee/products/la-perla-galera-guatemala?variant=34397304651914",
+		"xpath": "//*[@id=\"ProductSection-product-template\"]/section/div/div[2]/div/div/div[1]/div/div/div[2]/div[1]/h3/span[2]/span/span",
+		"category": "coffee"
+	},
+	{
+		"name": "Carnival Coffee: SAN RAMON, NICARAGUA",
+		"url": "https://carnivalcoffee.co.uk/collections/espresso-coffee/products/espresso-filter-san-ramon?variant=34775699292298",
+		"xpath": "//*[@id=\"ProductSection-product-template\"]/section/div/div[2]/div/div/div[1]/div/div/div[2]/div[1]/h3/span[2]/span/span",
+		"category": "coffee"
+	},
+	{
+		"name": "Carnival Coffee: SIDAMO, ETHIOPIA",
+		"url": "https://carnivalcoffee.co.uk/collections/espresso-coffee/products/espresso-sidamo-ethiopia?variant=34775714726026",
+		"xpath": "//*[@id=\"ProductSection-product-template\"]/section/div/div[2]/div/div/div[1]/div/div/div[2]/div[1]/h3/span[2]/span/span",
+		"category": "coffee"
+	}
+]
