@@ -1,6 +1,6 @@
 # Python Price Watcher
 
-A python script used to scrape prices for a set of products and optionally store these in a local database.
+A python script used to scrape prices for a set of products and store these in a local database.
 
 ### Setup:
 
@@ -8,18 +8,19 @@ A python script used to scrape prices for a set of products and optionally store
 
     > pip install -r requirements.txt
 
--   **config/config.json**: main config i.e. browser driver path and toggle to use a database instance.<br>
-
--   **config/products.json**: products to watch with links, names, and XPATH for prices.
+-   **config/config.json**: main config i.e. toggle headless selenium driver.<br>
 
 -   **Database instance (optional)**
     -   Create or connect to an existing database and point the _database.py_ config to your instance. During setup the script will create a dedicated table for price watching.
     -   Out of the box the script uses environment variables for database auth. You can set environment variables according to the code below or change this setup by replacing the following in _database.py_:
     ```python
-        conn = mysql.connector.connect(user=env.get('PRICEWATCH_MYSQL_USER'),
-                              password=env.get('PRICEWATCH_MYSQL_PASS'),
-                              host=env.get('PRICEWATCH_MYSQL_HOST'),
-                              database=env.get('PRICEWATCH_MYSQL_DATABASE'))
+        def generate_db_url():
+        env = os.environ
+        return "mysql://{user}:{pwd}@{host}/{database}".format(
+            user=env.get('PRICEWATCH_MYSQL_USER'),
+            pwd=env.get('PRICEWATCH_MYSQL_PASS'),
+            host=env.get('PRICEWATCH_MYSQL_HOST'),
+            database=env.get('PRICEWATCH_MYSQL_DATABASE'))
     ```
 
 ### Notes
