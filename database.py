@@ -1,61 +1,62 @@
-# Database setup and queries if applicable
 import os
-import mysql.connector
-from mysql.connector import errorcode
-from datetime import date, datetime
+from sqlalchemy import create_engine
+from sqlalchemy import Column, String, Integer, ForeignKey, Float, DateTime
+from sqlalchemy.orm import relationship, sessionmaker
+from sqlalchemy.ext.declarative import declarative_base
 
-env = os.environ
+Base = declarative_base()
 
-def connect():
-    # Database config stored as environment variables
-    conn = mysql.connector.connect(user=env.get('PRICEWATCH_MYSQL_USER'), 
-                              password=env.get('PRICEWATCH_MYSQL_PASS'),
-                              host=env.get('PRICEWATCH_MYSQL_HOST'),
-                              database=env.get('PRICEWATCH_MYSQL_DATABASE'))
-    return conn
+class Watcher(Base):
+    '''
+    Watcher table holds the required details to scrape prices.
+    Columns: id, name, url, xpath
+    PK: id
+    '''
+    __tablename__ = 'Watcher'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    url = Column(String(300), nullable=False)
+    xpath = Column(String(300), nullable=False)
+    def __repr__(self):
+        return 'Watcher(id={}, name={}, url={}, xpath={}'.format(self.id, self.name, self.url, self.xpath)
 
-def create_table(cursor):
-    create_table_query = (
-        "CREATE TABLE `prices` ("
-        "`id` int(11) NOT NULL AUTO_INCREMENT,"
-        "`name` VARCHAR(100) NOT NULL,"
-        "`date` DATETIME NOT NULL,"
-        "`url` VARCHAR(300) NOT NULL,"
-        "`price` FLOAT NOT NULL,"
-        "`category` VARCHAR(50),"
-        "PRIMARY KEY(id)"
-        ") ENGINE=InnoDB"
-    )
-    try:
-        cursor.execute(create_table_query)
-        print("Created prices table.")
-    except mysql.connector.Error as err:
-        # If already setup we'll just connect to existing table
-        if err.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-            print("Using existing prices table.")
-        else:
-            print(err.msg)
-    else:
-        print("price table created")
+class Price(Base):
+    '''
+    Price entries for a given watcher at a time
+    Columns: id, watcher_id, price, date
+    PK: id
+    '''
+    __tablename__ = 'Price'
+    id = Column(Integer, primary_key=True)
+    watcher_id = Column(Integer, ForeignKey('Watcher.id', name='FK__Price__Watcher'))
+    price = Column(Float, nullable=False)
+    date_time = Column(DateTime, nullable=False)
+    watcher = relationship('Watcher', back_populates = 'price')
+    def __repr__(self):
+        return 'Price(id={}, watcher_id={}, date_time={}'.format(self.id, self.watcher_id, self.date_time)
 
-def insert_product(conn, product):
-    product["lookup_date"] = datetime.now()
-    insert_query = (
-        "INSERT INTO prices (name, date, url, price, category)"
-        "VALUES ('{}','{}','{}',{},'{}')"
-            .format(product.get("name"), product.get("lookup_date"),
-                product.get("url"), product.get("price"), product.get("category")
-            )
-    )
-    try:
-        cursor = conn.cursor()
-        cursor.execute(insert_query)
-        # on successfull execution, commit the transaction
-        conn.commit()
-        print("Added price entry: {}".format(product))
-    except mysql.connector.Error as err:
-        print(err.msg)
-        conn.rollback()
+Watcher.price = relationship('Price', order_by = Price.id, back_populates = 'watcher')
 
-def quit(conn):
-    conn.close()
+def setup_db_session():
+    db_url = generate_db_url()
+    engine = create_engine(db_url, echo = True)
+    Base.metadata.create_all(engine)
+    session = sessionmaker(bind=engine)
+    return session()
+
+def generate_db_url():
+    env = os.environ
+    return "mysql://{user}:{pwd}@{host}/{database}".format(
+        user=env.get('PRICEWATCH_MYSQL_USER'),
+        pwd=env.get('PRICEWATCH_MYSQL_PASS'),
+        host=env.get('PRICEWATCH_MYSQL_HOST'),
+        database=env.get('PRICEWATCH_MYSQL_DATABASE'))
+
+def commit_price(watcher_id, price, session):
+    price_object = Price(watcher_id=watcher_id, price=price, date_time=datetime.now())
+    session.add(price_object)
+    session.commit()
+
+def commit_prices(prices, session):
+    session.add_all(prices)
+    session.commit()

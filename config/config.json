@@ -1,5 +1,3 @@
 {
-	"driver_path": "/home/liam/Resources/drivers/chromedriver",
-	"is_include_database": true,
 	"use_headless_driver": true
 }
