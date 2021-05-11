@@ -1,10 +1,15 @@
-#!/usr/bin/python
 import json
-import database
 import os
+import database
+from sqlalchemy import select
+from database import Watcher, Price
 from selenium import webdriver
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.utils import ChromeType
 from selenium.webdriver.chrome.options import Options
 from selenium.common.exceptions import NoSuchElementException
+from datetime import date, datetime
+from types import SimpleNamespace
 
 # Config
 
@@ -14,48 +19,34 @@ project_path = os.path.dirname(__file__)
 with open(os.path.join(project_path, 'config/config.json'), 'r') as c:
     config = json.load(c)
 
-with open(os.path.join(project_path, 'config/products.json'), 'r') as w:
-    products = json.load(w)
-
 # Constants
-DRIVER_PATH=config['driver_path']
-IS_SAVE_DB=config['is_include_database']
 HEADLESS_DRIVER=config['use_headless_driver']
 
 def main():
-    driver = setup_driver()
-    conn = None
-    # Allows control of print vs store in db
-    if IS_SAVE_DB:
-        conn = database.connect()
-        cursor = conn.cursor()
-        # Assumes database exists, creates table if not exists
-        database.create_table(cursor)
-    # main lookup
-    check_prices_for_products(driver, conn, products)
-    # close all connections
-    tear_down(driver, conn)
+    print('Setting up database and session')
+    session = database.setup_db_session()
+    print('DB and session setup complete')
 
-# main lookup
-def check_prices_for_products(driver, conn, products):
-    for product in products:
-        url = product.get("url")
-        name = product.get("name")
-        driver.get(url)
-        price = get_element_by_xpath(driver, product.get("xpath"))
+    driver = setup_driver()
+    watchers = session.query(Watcher).all()
+    prices = check_prices_for_watchers(driver, watchers)
+    database.commit_prices(prices, session)
+    
+
+def check_prices_for_watchers(driver, watchers):
+    prices = []
+    for watcher in watchers:
+        driver.get(watcher.url)
+        price = get_element_by_xpath(driver, watcher.xpath)
         if price:
             price = float(format_price(price.text))
-            # add price to existing dict from json
-            product["price"]=price
-            if conn:
-                database.insert_product(conn, product)
-            else:
-                # if no db connection
-                print(product)
+            price_object = Price(watcher_id=watcher.id, price=price, date_time=datetime.now())
+            prices.append(price_object)
         else:
-            print("Couldn't find price object for product: [{}{}]".format(name, url))
+            print("Couldn't find price object for product: [{}{}]".format(watcher.name, watcher.url))
+    return prices
 
-# surrounding in try catch when we need to call from multipel places
+# surrounding in try catch when we need to call from multiple places
 def get_element_by_xpath(driver, xpath):
     try:
         return driver.find_element_by_xpath(xpath)
@@ -72,15 +63,8 @@ def setup_driver():
         options.headless = True
         options.add_argument("--window-size=1920,1200")
 
-    driver = webdriver.Chrome(options=options, executable_path=DRIVER_PATH)
+    driver = webdriver.Chrome(ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install(), options=options)
     return driver
-
-def tear_down(driver, conn):
-    print("Closing connection.")
-    driver.quit()
-    if conn: 
-        conn.close()
-    print("Connection closed.")
 
 if __name__ == "__main__":
     main()
